@@ -3,6 +3,7 @@ import logging
 import os
 from typing import Dict, Any
 
+import aiofiles
 import openai
 import motor.motor_asyncio
 from aiogram import Bot, Dispatcher, types, Router, F
@@ -132,15 +133,12 @@ class MessageHandler:
             "./map/4-floor_kbtu.jpg",
             "./map/5-floor_kbtu.jpg",
         ]
-        media = [InputMediaPhoto(media=FSInputFile(map_path)) for map_path in maps_paths]
+        media = []
+        for map_path in maps_paths:
+            async with aiofiles.open(map_path, mode='rb') as f:
+                media.append(InputMediaPhoto(media=FSInputFile(map_path)))
 
         await bot.send_media_group(message.from_user.id, media)
-
-        for item in media:
-            try:
-                item.media.close()  # Close the media attribute (assuming it's a file-like object)
-            except Exception as e:
-                print(f"Error closing media: {e}")
 
     @staticmethod
     async def handle_contacts(message: types.Message):
