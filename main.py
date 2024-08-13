@@ -3,12 +3,11 @@ import logging
 import os
 from typing import Dict, Any
 
-import aiofiles
 import openai
 import motor.motor_asyncio
 from aiogram import Bot, Dispatcher, types, Router, F
 from aiogram.filters import Command
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InputMediaPhoto, InputFile, FSInputFile
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InputMediaPhoto, FSInputFile
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from dotenv import load_dotenv
@@ -133,10 +132,7 @@ class MessageHandler:
             "./map/4-floor_kbtu.jpg",
             "./map/5-floor_kbtu.jpg",
         ]
-        media = []
-        for map_path in maps_paths:
-            async with aiofiles.open(map_path, mode='rb') as f:
-                media.append(InputMediaPhoto(media=FSInputFile(map_path)))
+        media = [InputMediaPhoto(media=FSInputFile(map_path)) for map_path in maps_paths]
 
         await bot.send_media_group(message.from_user.id, media)
 
@@ -185,7 +181,7 @@ class MessageHandler:
         }
         file_path = file_paths.get(message.text)
         if file_path:
-            await bot.send_document(message.from_user.id, InputFile(file_path))
+            await bot.send_document(message.from_user.id, FSInputFile(file_path))
 
         await UserManager.send_main_keyboard(message.from_user.id)
 
@@ -223,7 +219,7 @@ class MessageHandler:
             for room_range, (location, map_path) in room_mapping.items():
                 if room_number in room_range:
                     await bot.send_message(message.from_user.id, location)
-                    await bot.send_photo(message.from_user.id, InputFile(map_path))
+                    await bot.send_photo(message.from_user.id, FSInputFile(map_path))
                     found = True
                     break
 
@@ -269,7 +265,7 @@ class MessageHandler:
         elif message.text.lower() in location_mapping:
             location, map_path = location_mapping[message.text.lower()]
             await bot.send_message(message.from_user.id, location)
-            await bot.send_photo(message.from_user.id, InputFile(map_path))
+            await bot.send_photo(message.from_user.id, FSInputFile(map_path))
             found = True
 
         elif message.text.lower() in room_number_mapping:
