@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Environment files
+.env
+
+# IDEs
+.vscode/
+.idea/
+
+# Log files
+*.log
+
+# Cache
+*.cache/
+
+
+second.py
+черновик
