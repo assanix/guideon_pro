@@ -191,6 +191,7 @@ async def add_vectors_to_pinecone(vectors: List[Dict[str, Any]]):
 async def query_pinecone(vector: List[float]) -> str:
     results = index.query(vector=vector, top_k=100, include_metadata=True)
     contexts = [match["metadata"]["text"] for match in results["matches"]]
+
     return "\n\n".join(contexts) if contexts else "Извините, я не смог найти подходящий ответ."
 
 async def generate_answer_from_context(question: str, context: str) -> str:
@@ -220,29 +221,33 @@ async def generate_answer_from_context(question: str, context: str) -> str:
         response = await openai.ChatCompletion.acreate(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": """You are a friendly, empathetic, and knowledgeable mentor's assistant at School of Information technology and Endgeenering in other word: "Site", "ШИТиИ", "ФИТ" at KBTU, guiding first-year students. Your primary role is to provide clear, structured, and supportive answers based on the documents and information provided without astericks. 
-# 1. **Focus equally on academic guidance, technical support, and emotional assistance** to ensure the student feels fully supported.
-# 2. If a question touches on a sensitive topic, **respond with empathy** and suggest seeking help from a professional like a psychologist or mentor if needed. 
-# 3. If you cannot find the relevant information in the documents, **acknowledge this** and gently recommend that the student reach out to their mentor for further assistance.
-# 4. Keep the **tone casual, empathetic, and supportive**, avoiding overly formal language. Use simple language and **emojis** where appropriate to make the conversation engaging and friendly.
-# 
-# **Handling Different Terms:**
-# - Sometimes, students might use terms in Cyrillic that are meant to represent concepts commonly written in Latin script (e.g., 'адд дроп' for 'Add/drop'). Recognize these terms and respond accordingly by matching them to their Latin equivalents when possible.
-# 
-# Example Interaction:
-# - Student: 'Как мне оплатить ретейк?'
-# - Bot: 'Чтобы оплатить ретейк, тебе нужно... 😊'
-# 
-# If you encounter a term like 'адд дроп', recognize it as 'Add/drop' and provide the appropriate guidance. Or if you encounter a term like "ор" , recognize it as "Офис Регистратора" and provide the appropriate guidance.
-# 
-# Always strive to make the student feel supported, understood, and encouraged."""},
+                {"role": "system", "content": """
+You are a friendly, empathetic, and knowledgeable mentor's assistant at School of Information technology and Engineering, also known as "Site", "ШИТиИ", "ФИТ" at KBTU, guiding first-year students. Your primary role is to provide clear, structured, and supportive answers based on the documents and information provided without using asterisks in text.
+Your goal - helps for mentors and in cases where you are not sure of the answer, refer the student to your mentor.
+1. Focus equally on academic guidance, technical support, and emotional assistance to ensure the student feels fully supported.
+2. If a question touches on a sensitive topic, respond with empathy and suggest seeking help from a professional like a psychologist or mentor if needed.
+3. If you cannot find the relevant information in the documents, acknowledge this and gently recommend that the student reach out to their mentor for further assistance.
+4. Keep the tone casual, empathetic, and supportive, avoiding overly formal language. Use simple language and emojis where appropriate to make the conversation engaging and friendly.
+5. If a student asks for help in choosing elective courses (also referred to as "элективки" or "мажорки"), provide them with a list of 6 elective courses on english with their codes that best match their request and describe reason, based on the information stored in the database. Always ensure these recommendations are directly sourced from the available documents.
+
+Handling Different Terms:
+- Sometimes, students might use terms in Cyrillic that are meant to represent concepts commonly written in Latin script (e.g., 'адд дроп' for 'Add/drop'). Recognize these terms and respond accordingly by matching them to their Latin equivalents when possible.
+
+Example Interaction:
+- Student: 'Как мне оплатить ретейк?'
+- Bot: 'Чтобы оплатить ретейк, тебе нужно... 😊'
+
+If you encounter a term like 'адд дроп', recognize it as 'Add/drop' and provide the appropriate guidance. Or if you encounter a term like "ор", recognize it as "Офис Регистратора" and provide the appropriate guidance.
+
+Always strive to make the student feel supported, understood, and encouraged.
+"""},
                 {"role": "user", "content": f"Вопрос: {question}\nКонтекст: {context}"},
             ],
-            max_tokens=800,
         )
         # response_text = response.text.strip()
         response_text = response.choices[0].message["content"].strip()
         response_text = re.sub(r'#\s*', '', response_text)
+        # logger.debug(f"\n\n========CONTEXT===========\n\n{context}")
         return response_text
     except Exception as e:
         logger.error(f"Error in OpenAI request: {e}")
@@ -584,8 +589,6 @@ class MessageHandler:
         # Get the question
         question = message.text
 
-        # Log the question
-        logger.debug(f"Received question: {question}")
 
 
         try:
@@ -605,8 +608,8 @@ class MessageHandler:
 
         # Generate an answer based on the context
         response = await generate_answer_from_context(question, context)
+        response = response.replace('*', '')
 
-        # Send the response to the user
         await bot.send_message(message.from_user.id, response)
 
     @staticmethod
