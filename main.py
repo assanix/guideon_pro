@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import hashlib
+from datetime import timedelta, datetime
 from typing import Dict, Any, List
 
 import openai
@@ -68,6 +69,10 @@ router = Router()
 
 # Admins ids
 ADMINS = [1138549375]
+
+
+last_student_message_time = {}
+time_threshold = timedelta(seconds=10)
 
 
 main_keyboard = ReplyKeyboardMarkup(
@@ -713,7 +718,40 @@ async def process_langchain_question_command(message: types.Message, state: FSMC
 
 @router.message()
 async def handle_unhandled_message(message: types.Message, state: FSMContext):
-    await MessageHandler.handle_unhandled_message(message, state)
+    chat_id = message.chat.id
+    sender = message.from_user
+
+    logger.debug(f"FROM {sender} IS {message.chat.type}")
+
+    # Проверяем, является ли отправитель администратором
+    if message.chat.type in ['group', 'supergroup']:
+        member = await bot.get_chat_member(chat_id, sender.id)
+        logger.debug(f"CHAT MEMBERS: {member}")
+
+        if member.status in ['administrator', 'creator']:
+            # Если сообщение от администратора, проверяем время последнего сообщения от студента
+            if chat_id in last_student_message_time:
+                last_message_time = last_student_message_time[chat_id]
+                logger.debug(f"LAST MESSAGE {last_message_time}")
+                current_time = datetime.now()
+                time_difference = current_time - last_message_time
+                logger.debug(f"CURRENT TIME: {current_time}")
+                logger.debug(f"LAST TIME: {last_message_time}")
+                logger.debug(f"TIME DIFFERENCE: {time_difference}")
+
+                if time_difference > time_threshold:
+                    # Отправляем уведомление админу
+                    for admin_id in ADMINS:
+                        await bot.send_message(admin_id,
+                                               f"Превышено время ответа на сообщение в чате {chat_id}. Пожалуйста, проверьте чат.")
+        else:
+            # Если сообщение от студента, сохраняем время
+            last_student_message_time[chat_id] = datetime.now()
+
+
+    # Обработка других типов сообщений
+    else:
+        await MessageHandler.handle_unhandled_message(message, state)
 
 
 async def main():
