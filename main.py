@@ -16,7 +16,8 @@ import openpyxl
 from aiogram import Bot, Dispatcher, types, Router, F
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InputMediaPhoto, FSInputFile
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InputMediaPhoto, FSInputFile, InlineKeyboardMarkup, \
+    InlineKeyboardButton
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from dotenv import load_dotenv
@@ -403,7 +404,8 @@ class MessageHandler:
     @staticmethod
     async def handle_map(message: types.Message):
         maps_paths = [
-            "./map/1-floor_kbtu.jpg",
+            "./map/0-floor_kbtu.JPG",
+            "./map/1-floor_kbtu.png",
             "./map/2-floor_kbtu.jpg",
             "./map/3-floor_kbtu.jpg",
             "./map/4-floor_kbtu.jpg",
@@ -445,17 +447,25 @@ class MessageHandler:
 
     @staticmethod
     async def handle_feedback(message: types.Message, state: FSMContext):
+        back_keyboard = ReplyKeyboardMarkup(
+            keyboard=[[KeyboardButton(text="Назад")]],
+            resize_keyboard=True
+        )
         await bot.send_message(
             message.from_user.id,
-            "Здесь вы можете анонимно написать жалобу, предложение или же сказать спасибо не только Менторской программе, а так же Деканату ШИТиИ. Все письма будут проверяться и читаться. Удачи!",
+            "Здесь вы можете анонимно написать жалобу, предложение или же сказать спасибо не только Менторской программе, а так же Деканату ШИТиИ. Все письма будут проверяться и читаться.",
+            reply_markup=back_keyboard
         )
         await state.set_state(BotStates.waiting_for_feedback)
 
     @staticmethod
     async def process_feedback(message: types.Message, state: FSMContext):
-        await UserManager.save_feedback(message.from_user.id, message.text)
-        await bot.send_message(message.from_user.id, "Спасибо за ваше сообщение!")
-        await state.clear()
+        if message.text == 'Назад':
+            await MessageHandler.handle_back(message, state)
+        else:
+            await UserManager.save_feedback(message.from_user.id, message.text)
+            await bot.send_message(message.from_user.id, "Спасибо за ваше сообщение!")
+            await state.clear()
 
     @staticmethod
     async def handle_rup(message: types.Message):
@@ -500,21 +510,36 @@ class MessageHandler:
     async def handle_room_number(message: types.Message, state: FSMContext):
         found = False
         room_mapping = {
-            range(100, 144): ("Вы на Панфилова, 1 этаж.", "./map/floor1/PF.png"),
-            range(144, 153): ("Вы на Толе Би, 1 этаж.", "./map/floor1/TB.png"),
-            range(156, 184): ("Вы на Абылайхана, 1 этаж.", "./map/floor1/Abl.png"),
-            range(252, 285): ("Вы на Абылайхана, 2 этаж.", "./map/floor2/ABL.png"),
-            range(202, 246): ("Вы на Панфилова, 2 этаж.", "./map/floor2/PF.png"),
-            range(246, 252): ("Вы на Толе Би, 2 этаж.", "./map/floor2/TB.png"),
-            range(300, 344): ("Вы на Панфилова, 3 этаж.", "./map/floor3/PF.png"),
-            range(344, 361): ("Вы на Толе Би, 3 этаж.", "./map/floor3/TB.png"),
-            range(361, 389): ("Вы на Абылайхана, 3 этаж.", "./map/floor3/ABL.png"),
-            range(501, 523): ("Вы на Толе Би, 5 этаж.", "./map/5floor.png"),
-            range(400, 417): ("Вы на Панфилова, 4 этаж.", "./map/floor4/PF.png"),
-            range(419, 439): ("Вы на Казыбек Би, 4 этаж.", "./map/floor4/KB.png"),
-            range(444, 462): ("Вы на Абылайхана, 4 этаж.", "./map/floor4/ABL.png"),
-            range(462, 477): ("Вы на Толе Би, 4 этаж.", "./map/floor4/TB.png"),
+            range(0,35): ("Панфилова 0 этаж.", "./map/0-floor_kbtu.JPG"),
+            range(35,69): ("Толе би 0 эитаж.", "./map/0-floor_kbtu.JPG"),
+            range(69, 99): ("Абылай хана 0 этаж.", "./map/0-floor_kbtu.JPG"),
+            range(100, 144): ("Панфилова, 1 этаж.", "./map/floor1/PF.png"),
+            range(144, 153): ("Толе Би, 1 этаж.", "./map/floor1/TB.png"),
+            range(156, 184): ("Абылайхана, 1 этаж.", "./map/floor1/Abl.png"),
+            range(252, 285): ("Абылайхана, 2 этаж.", "./map/floor2/ABL.png"),
+            range(202, 246): ("Панфилова, 2 этаж.", "./map/floor2/PF.JPEG"),
+            range(246, 252): ("Толе Би, 2 этаж.", "./map/floor2/TB.png"),
+            range(300, 344): ("Панфилова, 3 этаж.", "./map/floor3/PF.png"),
+            range(344, 361): ("Толе Би, 3 этаж.", "./map/floor3/TB.png"),
+            range(361, 389): ("Абылайхана, 3 этаж.", "./map/floor3/ABL.png"),
+            range(501, 523): ("Толе Би, 5 этаж.", "./map/5floor.png"),
+            range(400, 417): ("Панфилова, 4 этаж.", "./map/floor4/PF.png"),
+            range(419, 439): ("Казыбек Би, 4 этаж.", "./map/floor4/KB.png"),
+            range(444, 462): ("Абылайхана, 4 этаж.", "./map/floor4/ABL.png"),
+            range(462, 477): ("Толе Би, 4 этаж.", "./map/floor4/TB.png"),
+            range(725, 778): ("Казыбек Би, 2 этаж.", "./map/floor2/KB.JPEG"),
         }
+
+        special_room_mapping = {
+            "216а": ("Панфилова, 2 этаж.", "./map/floor2/PF.png"),
+            "216а": ("Панфилова, 2 этаж.", "./map/floor2/PF.png"),
+            "216b": ("Панфилова, 2 этаж.", "./map/floor2/PF.png"),
+            "216б": ("Панфилова, 2 этаж.", "./map/floor2/PF.png"),
+            "251a": ("Толе би, 2 этаж.", "./map/floor2/TB.png"),
+            "251А": ("Толе би, 2 этаж.", "./map/floor2/TB.png"),
+        }
+
+        room_number = message.text.lower().strip()
 
         if message.text.isdigit():
             room_number = int(message.text)
@@ -524,6 +549,11 @@ class MessageHandler:
                     await bot.send_photo(message.from_user.id, FSInputFile(map_path))
                     found = True
                     break
+        elif room_number in special_room_mapping:
+            location, map_path = special_room_mapping[room_number]
+            await bot.send_message(message.from_user.id, location)
+            await bot.send_photo(message.from_user.id, FSInputFile(map_path))
+            found = True
 
         if not found:
             await bot.send_message(
@@ -535,9 +565,31 @@ class MessageHandler:
 
     @staticmethod
     async def handle_find_room(message: types.Message, state: FSMContext):
+        inline_kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="Библиотека", callback_data="find_library"),
+                    InlineKeyboardButton(text="Где покушать", callback_data="find_eat")
+                ],
+                [
+                    InlineKeyboardButton(text="Где поучиться", callback_data="find_study"),
+                    InlineKeyboardButton(text="Туалет", callback_data="find_restroom")
+                ],
+                [
+                    InlineKeyboardButton(text="Офис регистратора", callback_data="find_or"),
+                    InlineKeyboardButton(text="Деканат", callback_data="find_dean")
+                ],
+                [
+                    InlineKeyboardButton(text="Питьевая вода", callback_data="find_water"),
+                ]
+            ]
+        )
+
+        # Send message with inline buttons
         await bot.send_message(
             message.from_user.id,
-            "Введите номер или название кабинета, который вы хотите найти.\n\nМожно узнать места где рядом можно покушать или же поучиться",
+            "Введите номер или название кабинета, который вы хотите найти, или выберите одну из опций ниже:",
+            reply_markup=inline_kb,
         )
         await state.set_state(BotStates.waiting_for_find_room)
 
@@ -786,6 +838,42 @@ async def handle_unhandled_message(message: types.Message, state: FSMContext):
     # Обработка других типов сообщений
     else:
         await MessageHandler.handle_unhandled_message(message, state)
+
+
+@router.callback_query(lambda c: c.data and c.data.startswith('find_'))
+async def process_find_room_callback(callback_query: types.CallbackQuery):
+    code_to_message = {
+        "find_library": {
+            "photos": ["./map/library.JPEG"]
+        },
+        "find_eat": {
+            "photos": ["./map/eat/0-floor.JPEG", "./map/eat/1-floor.JPEG", "./map/eat/3-floor.JPEG"]
+        },
+        "find_study": {
+            "photos": ["./map/study/0-floor.JPEG", "./map/study/1-floor.JPEG","./map/study/2-floor.JPEG", "./map/study/4-floor.JPEG" ]
+        },
+        "find_restroom": {
+            "photos": ["./map/toilet/0-floor.JPEG", "./map/toilet/1-floor.JPEG", "./map/toilet/2-floor.JPEG", "./map/toilet/3-floor.JPEG", "./map/toilet/4-floor.JPEG"]
+        },
+        "find_or": {
+            "photos": ["./map/OR.JPEG"]
+        },
+        "find_dean": {
+            "photos": ["./map/DCSITE.png"]
+        },
+        "find_water": {
+            "photos": ["./map/water/0-floor.JPEG", "./map/water/1-floor.JPEG", "./map/water/3-floor.JPEG", "./map/water/4-floor.JPEG"]
+        }
+    }
+
+    await bot.answer_callback_query(callback_query.id)
+
+    if callback_query.data in code_to_message:
+
+        photos = code_to_message[callback_query.data]["photos"]
+        media = [InputMediaPhoto(media=FSInputFile(photo_path)) for photo_path in photos]
+        await bot.send_media_group(callback_query.from_user.id, media)
+
 
 
 async def main():
