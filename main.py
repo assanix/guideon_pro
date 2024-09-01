@@ -14,6 +14,7 @@ import docx
 import PyPDF2
 import openpyxl
 from aiogram import Bot, Dispatcher, types, Router, F
+from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InputMediaPhoto, FSInputFile
 from aiogram.fsm.state import State, StatesGroup
@@ -79,7 +80,8 @@ main_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="🗺️ Карта"), KeyboardButton(text="📚 РУП ШИТиИ")],
         [KeyboardButton(text="🫣 Где Я?"), KeyboardButton(text="🔍 Найти"), KeyboardButton(text="🤖 MentorGPT")],
-        [KeyboardButton(text="📥 Жалобы/Предложения"), KeyboardButton(text="💬 Контакты")]
+        [KeyboardButton(text="📥 Жалобы/Предложения"), KeyboardButton(text="💬 Контакты")],
+        [KeyboardButton(text="📅 Академический календарь")]
     ],
     resize_keyboard=True
 )
@@ -131,6 +133,8 @@ async def handle_main_menu_button(message: types.Message, state: FSMContext):
         await MessageHandler.handle_feedback(message, state)
     elif message.text == "💬 Контакты":
         await MessageHandler.handle_contacts(message)
+    elif message.text == "📅 Академический календарь":
+        await MessageHandler.handle_calendar(message)
 
 
 class BotStates(StatesGroup):
@@ -411,8 +415,33 @@ class MessageHandler:
 
     @staticmethod
     async def handle_contacts(message: types.Message):
-        response_text = "Логин и пароль от wsp  – Helpingstudents@kbtu.kz\n\n 📞 Контакты:\n- Офис Регистратора: 8 727 357 42 81, d.fazylova@kbtu.kz, officeregistrar@kbtu.kz\n- Библиотека: 8 727 357 42 84 (вн. 241), u.bafubaeva@kbtu.kz\n- Общежитие: 8 727 357 42 42 (вн. 601), m.shopanov@kbtu.kz, a.esimbekova@kbtu.kz\n- Оплата обучения: 8 727 357 42 58 (вн. 163, 169) a.nauruzbaeva@kbtu.kz, m.aitakyn@kbtu.kz\n- Мед. центр - medcenter@kbtu.kz\n\n🏫 Деканаты:\n- Бизнес школа: 8 727 357 42 67 (вн. 352, 358), e.mukashev@kbtu.kz, a.yerdebayeva@kbtu.kz\n- Международная школа экономики: 8 727 357 42 71 (вн. 383), a.islyami@kbtu.kz, d.bisenbaeva@kbtu.kz\n- Школа информационных технологий и инженерии: 8 727 357 42 20, fit_1course@kbtu.kz\n- Школа прикладной математики: 8 727 357 42 25, a.isakhov@kbtu.kz, n.eren@kbtu.kz\n- Школа энергетики и нефтегазовой индустрии: 8 727 357 42 42 (вн. 324), a.ismailov@kbtu.kz, a.abdukarimov@kbtu.kz\n- Школа геологии: 8 727 357 42 42 (вн. 326), a.akhmetzhanov@kbtu.kz, g.ulkhanova@kbtu.kz\n- Казахстанская морская академия: 8 727 357 42 27 (вн. 390, 392), r.biktashev@kbtu.kz, s.dlimbetova@kbtu.kz\n- Школа химической инженерии: 8 727 291 57 84, +8 727 357 42 42 (вн. 492), k.dzhamansarieva@kbtu.kz, n.saparbaeva@kbtu.kz\n- Лаборатория альтернативной энергетики и нанотехнологий: 8 727 357 42 66 (вн. 550), n.beisenkhanov@kbtu.kz, z.bugybai@kbtu.kz\n"
-        await bot.send_message(message.chat.id, response_text)
+        response_text = '''
+Уважаемые студенты первого курса!
+По всем вопросам обращайтесь по следующим контактам:
+📍Служба поддержки для студентов 1 г.о ШИТиИ – +7 727 357 42 42, site_1course@kbtu.kz, 264/265 кабинет
+📍Главный менеджер 1 курса - Айтахун Толғанай Бауыржанқызы t.aitakhun@kbtu.kz
+📍Менеджер 1 курса - Тұңғыш Бақдәулет Ерболұлы b.tunggysh@kbtu.kz
+📍Офис Регистратора(вопросы по расписанию, регистрация на дисциплины, справки (через WSP)) - +7 727 357 42 81, officeregistrar@kbtu.kz, 239 кабинет
+📍Библиотека – +7 727 357 42 81, a.shermakhanova@kbtu.kz, 158/161/164 кабинет
+📍KBTU Jastar City - +7 727 357 42 81, a.esimbekova@kbtu.kz, d.kasymov@kbtu.kz, ул. Ислама Каримова 70
+📍Медицинская Служба - +7 727 357 42 81, medcenter@kbtu.kz, 348А/348Б кабинет
+📍Служба Психологической Поддержки Студентов(149/155 кабинет) - 
+<a href='https://outlook.office365.com/book/Bookings7@kbtu.kz/'>Запись к психологу</a>
+<a href='https://t.me/PsySupportKBTU'>Telegram-channel</a> 
+📍Департамент по Интернационализации(Миграция) - +7 727 357 42 81, a.biyekenova@kbtu.kz, 427 кабинет
+📍Академическая мобильность - +7 727 357 42 81, s.pak@kbtu.kz, 427 кабинет
+
+📍Президент ШИТиИ - @altyyyn_aaai
+📍Head of mentorship - @us_sun
+'''
+        await bot.send_message(message.chat.id, response_text, parse_mode=ParseMode.HTML)
+
+
+    @staticmethod
+    async def handle_calendar(message: types.Message):
+        calendar_file_path = "./rup_fit/calendar.pdf"
+        await bot.send_document(message.chat.id, FSInputFile(calendar_file_path))
+
 
     @staticmethod
     async def handle_feedback(message: types.Message, state: FSMContext):
@@ -560,7 +589,7 @@ class MessageHandler:
 
     @staticmethod
     async def process_langchain_question(message: types.Message, state: FSMContext):
-        if message.text in {"🗺️ Карта", "📚 РУП ШИТиИ", "🫣 Где Я?", "🔍 Найти", "📥 Жалобы/Предложения", "💬 Контакты"}:
+        if message.text in {"🗺️ Карта", "📚 РУП ШИТиИ", "🫣 Где Я?", "🔍 Найти", "📥 Жалобы/Предложения", "💬 Контакты","📅 Академический календарь"}:
             await handle_main_menu_button(message, state)
             return
 
@@ -634,6 +663,7 @@ class UserManager:
     async def save_feedback(user_id: int, feedback: str):
         await feedback_collection.insert_one({
             "user_id": user_id,
+            "date": datetime.now(),
             "feedback": feedback
         })
 
@@ -650,6 +680,10 @@ async def start_command(message: types.Message):
 @router.message(F.text == "Карта🗺️")
 async def map_command(message: types.Message):
     await MessageHandler.handle_map(message)
+
+@router.message(F.text == "📅 Академический календарь")
+async def academic_calendar_command(message: types.Message):
+    await MessageHandler.handle_calendar(message)
 
 
 @router.message(F.text == "Контакты💬")
