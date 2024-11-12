@@ -35,10 +35,8 @@ PINECONE_ENV = os.getenv("PINECONE_ENV")
 PINECONE_INDEX_NAME = "kbtu-docs"
 GEMINI_API_KEY=os.getenv("GEMINI_API_KEY")
 
-
 pc = Pinecone(api_key=PINECONE_API_KEY)
 index = pc.Index(PINECONE_INDEX_NAME)
-
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
