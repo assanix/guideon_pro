@@ -42,6 +42,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
+
 class UnicodeFormatter(logging.Formatter):
     def format(self, record):
         if isinstance(record.msg, str):
